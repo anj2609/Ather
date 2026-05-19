@@ -324,10 +324,25 @@ final class ConcurrencyReadout extends ConsumerWidget {
         ),
         const Spacer(),
         OutlinedButton(
+          onPressed: full ? null : () => _simulateJoins(ref),
+          child: const Text('Simulate 50 Joins'),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton(
           onPressed: () => ref.read(raidRepositoryProvider).reset(),
           child: const Text('Reset Simulation'),
         ),
       ],
+    );
+  }
+
+  Future<void> _simulateJoins(WidgetRef ref) async {
+    final repository = ref.read(raidRepositoryProvider);
+    final runId = DateTime.now().microsecondsSinceEpoch;
+    await Future.wait(
+      List.generate(50, (index) {
+        return repository.joinRaid('sim-$runId-$index');
+      }),
     );
   }
 }
