@@ -92,7 +92,7 @@ final class EventCommandPanel extends StatelessWidget {
         const SizedBox(height: 18),
         const RaidPanel(),
         const SizedBox(height: 18),
-        if (compact) SizedBox(height: 260, child: integrityPanel),
+        if (compact) SizedBox(height: 340, child: integrityPanel),
         if (!compact) Expanded(child: integrityPanel),
       ],
     );
@@ -223,7 +223,11 @@ final class RaidPanel extends ConsumerWidget {
             Row(
               children: [
                 Expanded(
-                  child: JoinStatusText(state: joinState, joined: joined),
+                  child: JoinStatusText(
+                    state: joinState,
+                    joined: joined,
+                    isFull: snapshot.isFull,
+                  ),
                 ),
                 FilledButton(
                   onPressed: disabled
@@ -291,10 +295,16 @@ final class RaidSlotGrid extends StatelessWidget {
 }
 
 final class JoinStatusText extends StatelessWidget {
-  const JoinStatusText({required this.state, required this.joined, super.key});
+  const JoinStatusText({
+    required this.state,
+    required this.joined,
+    required this.isFull,
+    super.key,
+  });
 
   final JoinState state;
   final bool joined;
+  final bool isFull;
 
   @override
   Widget build(BuildContext context) {
@@ -306,7 +316,11 @@ final class JoinStatusText extends StatelessWidget {
             : 'Assigned slot ${receipt.slotIndex + 1}',
       JoinRejected(:final failure) => failure.message,
       JoinIdle() =>
-        joined ? 'You are in the raid.' : 'Ready for atomic allocation.',
+        joined
+            ? 'You are in the raid.'
+            : isFull
+                ? 'Raid is full. Allocation closed.'
+                : 'Ready for atomic allocation.',
     };
     return Text(message, style: Theme.of(context).textTheme.bodyMedium);
   }
@@ -341,7 +355,10 @@ final class ConcurrencyReadout extends ConsumerWidget {
         ),
         const SizedBox(height: 8),
         OutlinedButton(
-          onPressed: () => ref.read(raidRepositoryProvider).reset(),
+          onPressed: () {
+            ref.read(raidRepositoryProvider).reset();
+            ref.invalidate(joinControllerProvider);
+          },
           child: const Text('Reset Simulation'),
         ),
       ],
