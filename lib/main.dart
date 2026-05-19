@@ -99,18 +99,41 @@ final class EventCommandPanel extends StatelessWidget {
   }
 }
 
-final class _Header extends StatelessWidget {
+final class _Header extends ConsumerWidget {
   const _Header();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
-    return Column(
+    final currentUserId = ref.watch(localUserIdProvider);
+
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('PROJECT AETHER', style: textTheme.displaySmall),
-        const SizedBox(height: 6),
-        Text('World event operations console', style: textTheme.bodyMedium),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('PROJECT AETHER', style: textTheme.displaySmall),
+              const SizedBox(height: 6),
+              Text('World event operations console', style: textTheme.bodyMedium),
+            ],
+          ),
+        ),
+        DropdownButton<String>(
+          value: currentUserId,
+          underline: const SizedBox.shrink(),
+          items: List.generate(15, (index) {
+            final id = 'player-${(index + 1).toString().padLeft(4, '0')}';
+            return DropdownMenuItem(value: id, child: Text(id));
+          }),
+          onChanged: (newId) {
+            if (newId != null) {
+              ref.read(localUserIdProvider.notifier).setUserId(newId);
+              ref.invalidate(joinControllerProvider);
+            }
+          },
+        ),
       ],
     );
   }

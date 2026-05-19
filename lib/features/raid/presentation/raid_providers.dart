@@ -20,6 +20,16 @@ final joinRaidUseCaseProvider = Provider<JoinRaidUseCase>((ref) {
   return JoinRaidUseCase(ref.watch(raidRepositoryProvider));
 });
 
-final localUserIdProvider = Provider<String>((ref) => 'player-0001');
+final localUserIdProvider =
+    NotifierProvider<LocalUserIdNotifier, String>(LocalUserIdNotifier.new);
+
+class LocalUserIdNotifier extends Notifier<String> {
+  @override
+  String build() => 'player-0001';
+
+  void setUserId(String id) {
+    state = id;
+  }
+}
 
 final raidCapacityProvider = Provider<int>((ref) => AppConstants.raidCapacity);
