@@ -10,6 +10,8 @@ final class WorldEventTick {
     final value = startsAt.difference(now);
     return value.isNegative ? Duration.zero : value;
   }
+
+  bool get expired => remaining == Duration.zero;
 }
 
 final class WorldEventClock {
@@ -22,10 +24,13 @@ final class WorldEventClock {
   final Duration interval;
 
   Stream<WorldEventTick> watch() async* {
-    yield WorldEventTick(now: DateTime.now(), startsAt: startsAt);
-    yield* Stream.periodic(
-      interval,
-      (_) => WorldEventTick(now: DateTime.now(), startsAt: startsAt),
-    );
+    while (true) {
+      final tick = WorldEventTick(now: DateTime.now(), startsAt: startsAt);
+      yield tick;
+      if (tick.expired) {
+        return;
+      }
+      await Future<void>.delayed(interval);
+    }
   }
 }

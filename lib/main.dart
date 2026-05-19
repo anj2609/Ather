@@ -121,11 +121,9 @@ final class CountdownPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final remaining = ref.watch(
-      worldEventTickProvider.select(
-        (tick) => tick.value?.remaining ?? Duration.zero,
-      ),
-    );
+    final tick = ref.watch(worldEventTickProvider).value;
+    final remaining = tick?.remaining ?? Duration.zero;
+    final expired = tick?.expired ?? false;
     final minutes = remaining.inMinutes
         .remainder(60)
         .toString()
@@ -159,11 +157,25 @@ final class CountdownPanel extends ConsumerWidget {
                   ],
                 ),
               ),
-              Text(
-                '$minutes:$seconds.$tenths',
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    expired ? 'OPEN' : '$minutes:$seconds.$tenths',
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                  if (expired) ...[
+                    const SizedBox(height: 6),
+                    TextButton(
+                      onPressed: () => ref
+                          .read(worldBossStartsAtProvider.notifier)
+                          .restart(),
+                      child: const Text('Restart Countdown'),
+                    ),
+                  ],
+                ],
               ),
             ],
           ),

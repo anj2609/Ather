@@ -9,6 +9,7 @@ void main() {
     );
 
     expect(tick.remaining, Duration.zero);
+    expect(tick.expired, isTrue);
   });
 
   test('world event clock emits 100ms cadence compatible ticks', () async {
@@ -21,5 +22,16 @@ void main() {
 
     expect(ticks, hasLength(2));
     expect(ticks.last.remaining <= ticks.first.remaining, isTrue);
+  });
+
+  test('world event clock emits one expired tick and closes', () async {
+    final clock = WorldEventClock(
+      startsAt: DateTime.now().subtract(const Duration(seconds: 1)),
+    );
+
+    final ticks = await clock.watch().toList();
+
+    expect(ticks, hasLength(1));
+    expect(ticks.single.expired, isTrue);
   });
 }
