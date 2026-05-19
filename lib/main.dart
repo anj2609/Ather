@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'core/constants/app_constants.dart';
+import 'core/errors/app_failure.dart';
 import 'core/theme/app_theme.dart';
 import 'features/chat/domain/chat_message.dart';
 import 'features/chat/presentation/chat_providers.dart';
@@ -370,7 +371,9 @@ final class _ChatPanelState extends ConsumerState<ChatPanel> {
   @override
   Widget build(BuildContext context) {
     final messages = ref.watch(latestChatProvider).value ?? const [];
-    final sending = ref.watch(sendChatControllerProvider).isLoading;
+    final sendState = ref.watch(sendChatControllerProvider);
+    final sending = sendState.isLoading;
+    final sendError = sendState.error;
     return DecoratedBox(
       decoration: _panelDecoration(context),
       child: Padding(
@@ -402,10 +405,16 @@ final class _ChatPanelState extends ConsumerState<ChatPanel> {
                     controller: _controller,
                     minLines: 1,
                     maxLines: 2,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Send raid callout',
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
                       isDense: true,
+                      errorText: sendError == null
+                          ? null
+                          : switch (sendError) {
+                              AppFailure(:final message) => message,
+                              _ => 'Message could not be sent',
+                            },
                     ),
                     onSubmitted: sending ? null : (_) => _send(),
                   ),
@@ -423,10 +432,13 @@ final class _ChatPanelState extends ConsumerState<ChatPanel> {
     );
   }
 
-  void _send() {
+  Future<void> _send() async {
     final body = _controller.text;
+    await ref.read(sendChatControllerProvider.notifier).send(body);
+    if (!mounted || ref.read(sendChatControllerProvider).hasError) {
+      return;
+    }
     _controller.clear();
-    ref.read(sendChatControllerProvider.notifier).send(body);
   }
 }
 
